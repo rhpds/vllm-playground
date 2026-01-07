@@ -69,13 +69,13 @@
   when: rhel_workload_vllm_playground_pull_images | bool
 
 - name: Pre-pull vLLM container images for root
-  ansible.builtin.command: vllm-playground pull --{{ _vllm_pull_mode }}
+  ansible.builtin.command: /usr/local/bin/vllm-playground pull --{{ _vllm_pull_mode }}
   become: true
   changed_when: true
   when: rhel_workload_vllm_playground_pull_images | bool
 
 - name: Pre-pull vLLM container images for {{ rhel_workload_vllm_playground_user }}
-  ansible.builtin.command: vllm-playground pull --{{ _vllm_pull_mode }}
+  ansible.builtin.command: /usr/local/bin/vllm-playground pull --{{ _vllm_pull_mode }}
   become: true
   become_user: "{{ rhel_workload_vllm_playground_user }}"
   changed_when: true
