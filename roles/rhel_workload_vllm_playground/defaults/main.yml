@@ -34,5 +34,20 @@ rhel_workload_vllm_playground_pull_images_mode: "gpu"
 # System User Configuration
 # ------------------------------------------------
 
-# User to install pip packages for (empty means current ansible user)
+# Additional user to install pip packages for (besides root)
+# Leave empty to only install for root
+# root will be available systemwide
 rhel_workload_vllm_playground_user: ""
+
+# ------------------------------------------------
+# Systemd Service Configuration
+# ------------------------------------------------
+
+# Whether to create and enable a systemd service for vllm-playground
+rhel_workload_vllm_playground_enable_service: true
+
+# User to run the systemd service as
+rhel_workload_vllm_playground_service_user: "root"
+
+# Additional arguments to pass to vllm-playground
+rhel_workload_vllm_playground_service_args: ""

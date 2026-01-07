@@ -3,25 +3,75 @@
 # vLLM Playground Cleanup / Removal Tasks
 # ================================================
 
-- name: Remove vllm-playground pip packages
+# ================================================
+# Stop and remove systemd service
+# ================================================
+
+- name: Stop vllm-playground service
+  ansible.builtin.systemd:
+    name: vllm-playground
+    state: stopped
+    enabled: false
+  become: true
+  failed_when: false
+
+- name: Remove vllm-playground systemd service file
+  ansible.builtin.file:
+    path: /etc/systemd/system/vllm-playground.service
+    state: absent
+  become: true
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+# ================================================
+# Remove pip packages
+# ================================================
+
+- name: Remove vllm-playground pip packages for root
+  ansible.builtin.pip:
+    name:
+      - vllm-playground
+      - guidellm
+    state: absent
+  become: true
+  failed_when: false
+
+- name: Remove vllm-playground pip packages for {{ rhel_workload_vllm_playground_user }}
   ansible.builtin.pip:
     name:
       - vllm-playground
       - guidellm
     state: absent
     extra_args: --user
-  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
-  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  become: true
+  become_user: "{{ rhel_workload_vllm_playground_user }}"
   failed_when: false
+  when: rhel_workload_vllm_playground_user | length > 0
 
-- name: Remove pre-pulled container images
+# ================================================
+# Remove container images
+# ================================================
+
+- name: Remove pre-pulled container images for root
   ansible.builtin.shell: |
     podman rmi docker.io/vllm/vllm-openai:v0.11.0 2>/dev/null || true
     podman rmi quay.io/rh_ee_micyang/vllm-cpu:v0.11.0 2>/dev/null || true
-  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
-  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  become: true
   changed_when: false
   failed_when: false
+
+- name: Remove pre-pulled container images for {{ rhel_workload_vllm_playground_user }}
+  ansible.builtin.shell: |
+    podman rmi docker.io/vllm/vllm-openai:v0.11.0 2>/dev/null || true
+    podman rmi quay.io/rh_ee_micyang/vllm-cpu:v0.11.0 2>/dev/null || true
+  become: true
+  become_user: "{{ rhel_workload_vllm_playground_user }}"
+  changed_when: false
+  failed_when: false
+  when: rhel_workload_vllm_playground_user | length > 0
 
 - name: Display removal completion message
   ansible.builtin.debug:

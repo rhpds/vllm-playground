@@ -10,10 +10,10 @@
 - name: Verify RHEL version
   ansible.builtin.assert:
     that:
-      - ansible_distribution == "RedHat"
-      - ansible_distribution_major_version == rhel_workload_accelerator_config_rhel_version
-    fail_msg: "This role requires RHEL {{ rhel_workload_accelerator_config_rhel_version }}. Detected: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
-    success_msg: "RHEL {{ ansible_distribution_major_version }} detected"
+      - ansible_facts['distribution'] == "RedHat"
+      - ansible_facts['distribution_major_version'] == rhel_workload_accelerator_config_rhel_version
+    fail_msg: "This role requires RHEL {{ rhel_workload_accelerator_config_rhel_version }}. Detected: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_major_version'] }}"
+    success_msg: "RHEL {{ ansible_facts['distribution_major_version'] }} detected"
 
 - name: Display accelerator mode
   ansible.builtin.debug:
@@ -25,7 +25,7 @@
 
 - name: Enable CodeReady Builder repository
   community.general.rhsm_repository:
-    name: "codeready-builder-for-rhel-{{ rhel_workload_accelerator_config_rhel_version }}-{{ ansible_architecture }}-rpms"
+    name: "codeready-builder-for-rhel-{{ rhel_workload_accelerator_config_rhel_version }}-{{ ansible_facts['architecture'] }}-rpms"
     state: enabled
   become: true
 

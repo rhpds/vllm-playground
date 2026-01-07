@@ -7,22 +7,50 @@
   ansible.builtin.debug:
     msg: "Installing vLLM Playground for accelerator type: {{ rhel_workload_vllm_playground_accelerator_type }}"
 
-- name: Install vllm-playground via pip
+# ================================================
+# Install for root user
+# ================================================
+
+- name: Install vllm-playground via pip for root
+  ansible.builtin.pip:
+    name: "{{ rhel_workload_vllm_playground_pip_packages }}"
+    state: present
+  become: true
+
+- name: Install benchmark tools (guidellm) for root
+  ansible.builtin.pip:
+    name: "{{ rhel_workload_vllm_playground_benchmark_package }}"
+    state: present
+  become: true
+  when: rhel_workload_vllm_playground_install_benchmark | bool
+
+# ================================================
+# Install for additional user (if specified)
+# ================================================
+
+- name: Install vllm-playground via pip for {{ rhel_workload_vllm_playground_user }}
   ansible.builtin.pip:
     name: "{{ rhel_workload_vllm_playground_pip_packages }}"
     state: present
     extra_args: --user
-  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
-  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  become: true
+  become_user: "{{ rhel_workload_vllm_playground_user }}"
+  when: rhel_workload_vllm_playground_user | length > 0
 
-- name: Install benchmark tools (guidellm)
+- name: Install benchmark tools (guidellm) for {{ rhel_workload_vllm_playground_user }}
   ansible.builtin.pip:
     name: "{{ rhel_workload_vllm_playground_benchmark_package }}"
     state: present
     extra_args: --user
-  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
-  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
-  when: rhel_workload_vllm_playground_install_benchmark | bool
+  become: true
+  become_user: "{{ rhel_workload_vllm_playground_user }}"
+  when:
+    - rhel_workload_vllm_playground_user | length > 0
+    - rhel_workload_vllm_playground_install_benchmark | bool
+
+# ================================================
+# Pre-pull container images
+# ================================================
 
 - name: Determine image pull mode
   ansible.builtin.set_fact:
@@ -40,12 +68,61 @@
       {%- endif -%}
   when: rhel_workload_vllm_playground_pull_images | bool
 
-- name: Pre-pull vLLM container images
+- name: Pre-pull vLLM container images for root
   ansible.builtin.command: vllm-playground pull --{{ _vllm_pull_mode }}
-  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
-  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  become: true
   changed_when: true
   when: rhel_workload_vllm_playground_pull_images | bool
+
+- name: Pre-pull vLLM container images for {{ rhel_workload_vllm_playground_user }}
+  ansible.builtin.command: vllm-playground pull --{{ _vllm_pull_mode }}
+  become: true
+  become_user: "{{ rhel_workload_vllm_playground_user }}"
+  changed_when: true
+  when:
+    - rhel_workload_vllm_playground_pull_images | bool
+    - rhel_workload_vllm_playground_user | length > 0
+
+# ================================================
+# Systemd Service Configuration
+# ================================================
+
+- name: Configure vllm-playground systemd service
+  when: rhel_workload_vllm_playground_enable_service | bool
+  become: true
+  block:
+    - name: Create vllm-playground systemd service file
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/vllm-playground.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=vLLM Playground Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User={{ rhel_workload_vllm_playground_service_user }}
+          ExecStart=/usr/local/bin/vllm-playground {{ rhel_workload_vllm_playground_service_args }}
+          Restart=on-failure
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable and start vllm-playground service
+      ansible.builtin.systemd:
+        name: vllm-playground
+        enabled: true
+        state: started
+
+# ================================================
+# Completion
+# ================================================
 
 - name: Display completion message
   ansible.builtin.debug:
@@ -53,6 +130,14 @@
       ============================================
       vLLM Playground installation complete!
       Accelerator: {{ rhel_workload_vllm_playground_accelerator_type }}
-
+      {% if rhel_workload_vllm_playground_user | length > 0 %}
+      Installed for: root, {{ rhel_workload_vllm_playground_user }}
+      {% else %}
+      Installed for: root
+      {% endif %}
+      {% if rhel_workload_vllm_playground_enable_service | bool %}
+      Systemd service: enabled and running
+      {% else %}
       You can now run: vllm-playground
+      {% endif %}
       ============================================
