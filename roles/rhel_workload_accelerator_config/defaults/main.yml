@@ -1,0 +1,43 @@
+---
+# ------------------------------------------------
+# General Settings
+# ------------------------------------------------
+
+# Expected RHEL major version
+rhel_workload_accelerator_config_rhel_version: "10"
+
+# Accelerator type: nvidia, gaudi, or none
+rhel_workload_accelerator_config_type: "nvidia"
+
+# ------------------------------------------------
+# Repository Configuration
+# ------------------------------------------------
+
+# EPEL release URL for RHEL 10
+rhel_workload_accelerator_config_epel_release_url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm"
+
+# ------------------------------------------------
+# NVIDIA Configuration
+# ------------------------------------------------
+
+# NVIDIA CUDA repository URL
+rhel_workload_accelerator_config_nvidia_repo_url: "https://developer.download.nvidia.com/compute/cuda/repos/rhel10/x86_64/cuda-rhel10.repo"
+
+# NVIDIA driver package name
+rhel_workload_accelerator_config_nvidia_driver_package: "nvidia-driver"
+
+# Whether to install nvidia-driver-cuda (for nvidia-smi)
+rhel_workload_accelerator_config_nvidia_install_smi: true
+
+# NVIDIA container toolkit package
+rhel_workload_accelerator_config_nvidia_container_toolkit_package: "nvidia-container-toolkit"
+
+# CDI configuration output path
+rhel_workload_accelerator_config_nvidia_cdi_config_path: "/etc/cdi/nvidia.yaml"
+
+# ------------------------------------------------
+# Intel Gaudi Configuration (placeholder)
+# ------------------------------------------------
+
+# Gaudi driver packages (to be defined when Gaudi support is added)
+# rhel_workload_accelerator_config_gaudi_driver_package: ""

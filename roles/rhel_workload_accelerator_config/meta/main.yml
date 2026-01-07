@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  role_name: rhel_workload_accelerator_config
+  author: Nate Stephany, Michael Yang
+  description: Configure RHEL 10 server with GPU/accelerator support (NVIDIA, Intel Gaudi)
+  company: Red Hat
+
+  license: GPL-2.0-or-later
+
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: EL
+      versions:
+        - "10"
+
+  galaxy_tags:
+    - nvidia
+    - gaudi
+    - gpu
+    - rhel
+    - accelerator
+    - ai
+    - inference
+
+dependencies: []

@@ -1,0 +1,52 @@
+---
+# ================================================
+# Accelerator Cleanup / Removal Tasks
+# ================================================
+
+# ================================================
+# NVIDIA Cleanup
+# ================================================
+
+- name: Remove CDI configuration
+  ansible.builtin.file:
+    path: "{{ rhel_workload_accelerator_config_nvidia_cdi_config_path }}"
+    state: absent
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Remove NVIDIA packages
+  ansible.builtin.dnf:
+    name:
+      - nvidia-driver*
+      - nvidia-container-toolkit*
+      - libnvidia-container*
+    state: absent
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Remove NVIDIA CUDA repository
+  ansible.builtin.file:
+    path: /etc/yum.repos.d/cuda-rhel10.repo
+    state: absent
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+# ================================================
+# Intel Gaudi Cleanup (placeholder)
+# ================================================
+
+- name: Intel Gaudi cleanup not yet implemented
+  ansible.builtin.debug:
+    msg: "Intel Gaudi accelerator cleanup is planned for a future release."
+  when: rhel_workload_accelerator_config_type == "gaudi"
+
+- name: Display removal completion message
+  ansible.builtin.debug:
+    msg: |
+      ============================================
+      Accelerator configuration removed.
+      Type: {{ rhel_workload_accelerator_config_type }}
+
+      Note: EPEL and CRB repos were left enabled
+      as they may be used by other packages.
+      ============================================

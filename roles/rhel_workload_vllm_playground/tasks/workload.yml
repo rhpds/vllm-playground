@@ -1,0 +1,58 @@
+---
+# ================================================
+# vLLM Playground Installation
+# ================================================
+
+- name: Display vLLM installation mode
+  ansible.builtin.debug:
+    msg: "Installing vLLM Playground for accelerator type: {{ rhel_workload_vllm_playground_accelerator_type }}"
+
+- name: Install vllm-playground via pip
+  ansible.builtin.pip:
+    name: "{{ rhel_workload_vllm_playground_pip_packages }}"
+    state: present
+    extra_args: --user
+  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
+  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+
+- name: Install benchmark tools (guidellm)
+  ansible.builtin.pip:
+    name: "{{ rhel_workload_vllm_playground_benchmark_package }}"
+    state: present
+    extra_args: --user
+  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
+  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  when: rhel_workload_vllm_playground_install_benchmark | bool
+
+- name: Determine image pull mode
+  ansible.builtin.set_fact:
+    _vllm_pull_mode: >-
+      {%- if rhel_workload_vllm_playground_pull_images_mode == 'all' -%}
+        all
+      {%- elif rhel_workload_vllm_playground_pull_images_mode == 'gpu' -%}
+        gpu
+      {%- elif rhel_workload_vllm_playground_pull_images_mode == 'cpu' -%}
+        cpu
+      {%- elif rhel_workload_vllm_playground_accelerator_type == 'none' -%}
+        cpu
+      {%- else -%}
+        gpu
+      {%- endif -%}
+  when: rhel_workload_vllm_playground_pull_images | bool
+
+- name: Pre-pull vLLM container images
+  ansible.builtin.command: vllm-playground pull --{{ _vllm_pull_mode }}
+  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
+  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  changed_when: true
+  when: rhel_workload_vllm_playground_pull_images | bool
+
+- name: Display completion message
+  ansible.builtin.debug:
+    msg: |
+      ============================================
+      vLLM Playground installation complete!
+      Accelerator: {{ rhel_workload_vllm_playground_accelerator_type }}
+
+      You can now run: vllm-playground
+      ============================================

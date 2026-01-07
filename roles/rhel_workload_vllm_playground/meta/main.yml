@@ -1,0 +1,25 @@
+---
+galaxy_info:
+  role_name: rhel_workload_vllm_playground
+  author: Nate Stephany, Michael Yang
+  description: Install and configure vLLM playground on RHEL 10
+  company: Red Hat
+
+  license: GPL-2.0-or-later
+
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: EL
+      versions:
+        - "10"
+
+  galaxy_tags:
+    - vllm
+    - llm
+    - ai
+    - inference
+    - rhel
+    - container
+
+dependencies: []

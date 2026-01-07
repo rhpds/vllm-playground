@@ -1,0 +1,31 @@
+---
+# ================================================
+# vLLM Playground Cleanup / Removal Tasks
+# ================================================
+
+- name: Remove vllm-playground pip packages
+  ansible.builtin.pip:
+    name:
+      - vllm-playground
+      - guidellm
+    state: absent
+    extra_args: --user
+  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
+  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  failed_when: false
+
+- name: Remove pre-pulled container images
+  ansible.builtin.shell: |
+    podman rmi docker.io/vllm/vllm-openai:v0.11.0 2>/dev/null || true
+    podman rmi quay.io/rh_ee_micyang/vllm-cpu:v0.11.0 2>/dev/null || true
+  become: "{{ rhel_workload_vllm_playground_user | length > 0 }}"
+  become_user: "{{ rhel_workload_vllm_playground_user | default(omit) }}"
+  changed_when: false
+  failed_when: false
+
+- name: Display removal completion message
+  ansible.builtin.debug:
+    msg: |
+      ============================================
+      vLLM Playground has been removed.
+      ============================================

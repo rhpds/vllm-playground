@@ -1,0 +1,154 @@
+---
+# ================================================
+# Accelerator Setup
+# ================================================
+
+- name: Gather OS facts
+  ansible.builtin.setup:
+    filter: ansible_distribution*
+
+- name: Verify RHEL version
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == "RedHat"
+      - ansible_distribution_major_version == rhel_workload_accelerator_config_rhel_version
+    fail_msg: "This role requires RHEL {{ rhel_workload_accelerator_config_rhel_version }}. Detected: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+    success_msg: "RHEL {{ ansible_distribution_major_version }} detected"
+
+- name: Display accelerator mode
+  ansible.builtin.debug:
+    msg: "Configuring accelerator type: {{ rhel_workload_accelerator_config_type }}"
+
+# ================================================
+# Common Repository Setup
+# ================================================
+
+- name: Enable CodeReady Builder repository
+  community.general.rhsm_repository:
+    name: "codeready-builder-for-rhel-{{ rhel_workload_accelerator_config_rhel_version }}-{{ ansible_architecture }}-rpms"
+    state: enabled
+  become: true
+
+- name: Install EPEL release
+  ansible.builtin.dnf:
+    name: "{{ rhel_workload_accelerator_config_epel_release_url }}"
+    state: present
+    disable_gpg_check: true
+  become: true
+
+# ================================================
+# NVIDIA Setup
+# ================================================
+
+- name: Check for NVIDIA GPU
+  ansible.builtin.shell: lspci | grep -i nvidia
+  register: r_nvidia_gpu_check
+  changed_when: false
+  failed_when: false
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Verify NVIDIA GPU is present
+  ansible.builtin.assert:
+    that:
+      - r_nvidia_gpu_check.rc == 0
+    fail_msg: "NVIDIA accelerator type selected but no NVIDIA GPU detected."
+    success_msg: "NVIDIA GPU detected: {{ r_nvidia_gpu_check.stdout_lines[0] | default('Unknown') }}"
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Add NVIDIA CUDA repository
+  ansible.builtin.get_url:
+    url: "{{ rhel_workload_accelerator_config_nvidia_repo_url }}"
+    dest: /etc/yum.repos.d/cuda-rhel10.repo
+    mode: '0644'
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Install NVIDIA driver
+  ansible.builtin.dnf:
+    name: "{{ rhel_workload_accelerator_config_nvidia_driver_package }}"
+    state: present
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Get installed NVIDIA driver version
+  ansible.builtin.shell: rpm -qa | grep -E '^nvidia-driver-[0-9]' | head -1 | sed 's/nvidia-driver-//' | sed 's/-.*$//'
+  register: r_nvidia_driver_version
+  changed_when: false
+  when:
+    - rhel_workload_accelerator_config_type == "nvidia"
+    - rhel_workload_accelerator_config_nvidia_install_smi | bool
+
+- name: Install NVIDIA driver CUDA tools (nvidia-smi)
+  ansible.builtin.dnf:
+    name: "nvidia-driver-cuda-{{ r_nvidia_driver_version.stdout }}"
+    state: present
+  become: true
+  when:
+    - rhel_workload_accelerator_config_type == "nvidia"
+    - rhel_workload_accelerator_config_nvidia_install_smi | bool
+    - r_nvidia_driver_version.stdout | default('') | length > 0
+
+- name: Install NVIDIA container toolkit
+  ansible.builtin.dnf:
+    name: "{{ rhel_workload_accelerator_config_nvidia_container_toolkit_package }}"
+    state: present
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Create CDI configuration directory
+  ansible.builtin.file:
+    path: "{{ rhel_workload_accelerator_config_nvidia_cdi_config_path | dirname }}"
+    state: directory
+    mode: '0755'
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Generate CDI configuration for NVIDIA
+  ansible.builtin.command: nvidia-ctk cdi generate --output={{ rhel_workload_accelerator_config_nvidia_cdi_config_path }}
+  become: true
+  changed_when: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Reboot to initialize NVIDIA driver
+  ansible.builtin.reboot:
+    msg: "Rebooting to initialize NVIDIA driver"
+    reboot_timeout: 600
+  become: true
+  when: rhel_workload_accelerator_config_type == "nvidia"
+
+- name: Verify nvidia-smi works after reboot
+  ansible.builtin.command: nvidia-smi
+  register: r_nvidia_smi_check
+  changed_when: false
+  when:
+    - rhel_workload_accelerator_config_type == "nvidia"
+    - rhel_workload_accelerator_config_nvidia_install_smi | bool
+
+- name: Display nvidia-smi output
+  ansible.builtin.debug:
+    msg: "{{ r_nvidia_smi_check.stdout_lines }}"
+  when:
+    - rhel_workload_accelerator_config_type == "nvidia"
+    - rhel_workload_accelerator_config_nvidia_install_smi | bool
+    - r_nvidia_smi_check is defined
+
+# ================================================
+# Intel Gaudi Setup (placeholder)
+# ================================================
+
+- name: Intel Gaudi support not yet implemented
+  ansible.builtin.debug:
+    msg: "Intel Gaudi accelerator support is planned for a future release."
+  when: rhel_workload_accelerator_config_type == "gaudi"
+
+# ================================================
+# Completion
+# ================================================
+
+- name: Display completion message
+  ansible.builtin.debug:
+    msg: |
+      ============================================
+      Accelerator configuration complete!
+      Type: {{ rhel_workload_accelerator_config_type }}
+      ============================================

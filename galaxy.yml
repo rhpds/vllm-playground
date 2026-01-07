@@ -1,0 +1,34 @@
+---
+namespace: vllm_playground
+name: demo
+version: 1.0.0
+readme: README.md
+authors:
+  - Nate Stephany <nstephan@redhat.com>
+  - Michael Yang <micyang@redhat.com
+
+description: Ansible collection for configuring RHEL 10 servers to run vLLM playground with NVIDIA GPU support
+
+license:
+  - GPL-2.0-or-later
+
+tags:
+  - vllm
+  - nvidia
+  - gpu
+  - rhel
+  - llm
+  - ai
+  - inference
+
+dependencies: {}
+
+repository: https://github.com/yourusername/vllm-playground
+documentation: https://github.com/yourusername/vllm-playground
+homepage: https://github.com/yourusername/vllm-playground
+issues: https://github.com/yourusername/vllm-playground/issues
+
+build_ignore:
+  - .git
+  - .gitignore
+  - .DS_Store

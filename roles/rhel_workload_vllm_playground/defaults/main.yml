@@ -1,0 +1,38 @@
+---
+# ------------------------------------------------
+# General Settings
+# ------------------------------------------------
+
+# Accelerator type: nvidia, gaudi, or none (CPU-only)
+rhel_workload_vllm_playground_accelerator_type: "nvidia"
+
+# ------------------------------------------------
+# vLLM Playground Configuration
+# ------------------------------------------------
+
+# pip packages to install
+rhel_workload_vllm_playground_pip_packages:
+  - "vllm-playground"
+
+# Whether to install benchmark tools (guidellm)
+rhel_workload_vllm_playground_install_benchmark: true
+
+# Additional pip package for benchmarking
+rhel_workload_vllm_playground_benchmark_package: "vllm-playground[benchmark]"
+
+# ------------------------------------------------
+# Container Image Pull Configuration
+# ------------------------------------------------
+
+# Whether to pre-pull container images
+rhel_workload_vllm_playground_pull_images: true
+
+# Which images to pull: gpu, cpu, or all
+rhel_workload_vllm_playground_pull_images_mode: "gpu"
+
+# ------------------------------------------------
+# System User Configuration
+# ------------------------------------------------
+
+# User to install pip packages for (empty means current ansible user)
+rhel_workload_vllm_playground_user: ""
